@@ -1,10 +1,22 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database import get_db, SessionLocal
 from app.models import User, PurchaseHistory
 from datetime import datetime
 
 router = APIRouter()
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@router.get("/")
+def get_pharmacies(
+    db: Session = Depends(get_db)
+):
+    return db.query(User).all()
 
 @router.get("/top-spenders")
 def get_top_spenders(

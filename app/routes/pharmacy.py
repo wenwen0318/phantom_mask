@@ -24,35 +24,44 @@ def get_pharmacies(
 
 @router.get("/opening")
 def get_open_pharmacies(
-    weekday: str = None,
-    time: str = None,
+    weekday: str = Query(None),
+    time: str = Query(None),
     db: Session = Depends(get_db)
 ):
-    # 如果沒有提供 weekday 和 time，則使用當前的時間和日期
-    if not weekday or not time:
-        now = datetime.now(timezone(timedelta(hours=8)))  # 台灣時間（UTC+8）
-        if not weekday:
-            weekday = now.strftime("%A")  # 例如 "Monday"
-        if not time:
-            time = now.strftime("%H:%M")  # 例如 "14:30"
-    
-    # 查詢在指定的日期和時間範圍內開放的藥局
-    opening_hours = db.query(OpeningHour).filter(
-        OpeningHour.weekday == weekday,
+    # 若都未提供，則預設為目前台灣時間
+    if weekday is None and time is None:
+        now = datetime.now(timezone(timedelta(hours=8)))  # 台灣時區 UTC+8
+        weekday = now.strftime("%A")
+        time = now.strftime("%H:%M")
+        opening_hours = db.query(OpeningHour).filter(
+            OpeningHour.weekday == weekday,
+            OpeningHour.open_time <= time,
+            OpeningHour.close_time >= time
+        ).all()
+    elif weekday is None:
+        opening_hours = db.query(OpeningHour).filter(
         OpeningHour.open_time <= time,
         OpeningHour.close_time >= time
-    ).all()
+        ).all()
+    elif time is None:
+        opening_hours = db.query(OpeningHour).filter(
+        OpeningHour.weekday == weekday
+        ).all()
+    else :
+        opening_hours = db.query(OpeningHour).filter(
+            OpeningHour.weekday == weekday,
+            OpeningHour.open_time <= time,
+            OpeningHour.close_time >= time
+        ).all()
 
-    # 如果找不到對應的藥局，則返回 404 錯誤
     if not opening_hours:
         raise HTTPException(status_code=404, detail="No pharmacies open at this time.")
 
-    # 根據 opening_hours 查找對應的藥局
+    # 取得對應的藥局
     pharmacy_ids = [oh.pharmacy_id for oh in opening_hours]
     pharmacies = db.query(Pharmacy).filter(Pharmacy.id.in_(pharmacy_ids)).all()
 
-    # 返回藥局名稱
-    return [pharmacy.name for pharmacy in pharmacies]
+    return pharmacies
 
 @router.get("/{pharmacy_id}/masks")
 def get_pharmacy_masks(
