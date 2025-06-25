@@ -13,7 +13,7 @@ def get_db():
         db.close()
 
 @router.get("/")
-def get_pharmacies(
+def get_user(
     db: Session = Depends(get_db)
 ):
     return db.query(User).all()
@@ -22,7 +22,7 @@ def get_pharmacies(
 def get_top_spenders(
     start: str,
     end: str,
-    top_n: int = 5,
+    top: int = 5,
     db: Session = Depends(get_db)
 ):
     histories = db.query(PurchaseHistory).all()
@@ -41,5 +41,5 @@ def get_top_spenders(
 
     return [
         {"user_id": u.id, "name": u.name, "total_spent": spending[u.id]}
-        for u in ranked[:top_n]
+        for u in ranked[:top]
     ]

@@ -5,6 +5,7 @@ from app.database import get_db, SessionLocal, engine
 from app.models import Pharmacy, Mask, OpeningHour
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import operator
 
 router = APIRouter()
 
@@ -94,14 +95,27 @@ def get_pharmacy_masks(
         ]
     }
 
+comparison_ops = {
+    "<": operator.lt,
+    "<=": operator.le,
+    "==": operator.eq,
+    ">=": operator.ge,
+    ">": operator.gt,
+}
+
 @router.get("/mask-count")
 def get_pharmacies_by_mask_count(
     min_price: float,
     max_price: float,
-    threshold: int = Query(..., description="比較的口罩數量閾值"),
-    more_than: bool = Query(True, description="True: 多於 threshold；False: 少於 threshold"),
+    threshold: int = Query(..., description="口罩數量的比較門檻"),
+    comparison: str = Query(">", description="可用：<, <=, ==, >=, >"),
     db: Session = Depends(get_db)
 ):
+    if comparison not in comparison_ops:
+        raise HTTPException(status_code=400, detail="必須是 <、<=、==、>= 或 >")
+
+    compare_fn = comparison_ops[comparison]
+
     pharmacies = db.query(Pharmacy).all()
     result = []
 
@@ -112,7 +126,7 @@ def get_pharmacies_by_mask_count(
             Mask.price <= max_price
         ).count()
 
-        if (more_than and mask_count > threshold) or (not more_than and mask_count < threshold):
+        if compare_fn(mask_count, threshold):
             result.append({
                 "pharmacy_id": pharmacy.id,
                 "pharmacy_name": pharmacy.name,

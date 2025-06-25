@@ -1,8 +1,8 @@
 import json
 import re
 from datetime import datetime
-from app.database import SessionLocal
-from app.models import Pharmacy, Mask, User, PurchaseHistory, OpeningHour
+from app.database import SessionLocal, engine
+from app.models import Base, Pharmacy, Mask, User, PurchaseHistory, OpeningHour
 
 WEEKDAY_ALIASES = {
     "Mon": "Monday",
@@ -28,7 +28,7 @@ def parse_opening_hours(opening_str):
         section = section.strip()
         match = re.search(r'(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})', section)
         if not match:
-            print(f"⚠️ 無法解析時間段：{section}")
+            print(f"無法解析時間段：{section}")
             continue
         open_time, close_time = match.group(1), match.group(2)
         day_part = section[:match.start()].strip()
@@ -79,11 +79,15 @@ def insert_users(data, db):
         db.commit()
 
 def run():
+    # 清除並重新建立資料表
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     try:
         insert_pharmacies(load_json("./data/pharmacies.json"), db)
         insert_users(load_json("./data/users.json"), db)
-        print("ETL 完成，資料已成功導入資料庫！")
+        print("ETL完成 資料已成功導入資料庫")
     except Exception as e:
         print(f"發生錯誤: {e}")
     finally:

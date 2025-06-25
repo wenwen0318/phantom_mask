@@ -1,16 +1,14 @@
-services:
-  db:
-    image: postgres
-    environment:
-      POSTGRES_DB: pharmacy
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-    ports:
-      - "5432:5432"
+version: '3.8'
 
-  app:
-    build: .
-    depends_on:
-      - db
+services:
+  phantom-mask:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ENV: development
     ports:
-      - "8000:8000"
+      - "80:3000"
+    volumes:
+      - .:/app
+    container_name: my-project

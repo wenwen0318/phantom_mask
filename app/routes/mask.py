@@ -12,7 +12,7 @@ def get_db():
         db.close()
 
 @router.get("/")
-def get_pharmacies(
+def get_mask(
     db: Session = Depends(get_db)
 ):
     return db.query(Mask).all()
