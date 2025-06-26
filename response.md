@@ -32,10 +32,10 @@ $ python run_etl.py
 
 ### C.1. ERD
 
-[My ERD](docs\ERD.png).
+[My ERD](https://github.com/wenwen0318/phantom_mask/blob/main/docs/ERD.png).
 
 ### C.2. Technical Document
 
-For frontend programmer reading, please check this [api_docs](docs\api_docs.md) to know how to operate those APIs.
+For frontend programmer reading, please check this [api_docs](https://github.com/wenwen0318/phantom_mask/blob/main/docs/api_docs.md) to know how to operate those APIs.
 
 - --
