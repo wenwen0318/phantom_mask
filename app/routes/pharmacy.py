@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app.database import get_db, SessionLocal, engine
 from app.models import Pharmacy, Mask, OpeningHour
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 import operator
 
 router = APIRouter()
