@@ -1,7 +1,6 @@
 # app/database.py
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-
+from sqlalchemy.orm import sessionmaker
 # 使用 SQLite 資料庫 (phantom_mask.db)
 SQLALCHEMY_DATABASE_URL = "sqlite:///./phantom_mask.db"
 

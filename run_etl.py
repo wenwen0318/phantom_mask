@@ -1,8 +1,10 @@
 import json
 import re
-from datetime import datetime
+import sys
+import os
 from app.database import SessionLocal, engine
 from app.models import Base, Pharmacy, Mask, User, PurchaseHistory, OpeningHour
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'app'))
 
 WEEKDAY_ALIASES = {
     "Mon": "Monday",
@@ -28,7 +30,7 @@ def parse_opening_hours(opening_str):
         section = section.strip()
         match = re.search(r'(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})', section)
         if not match:
-            print(f"無法解析時間段：{section}")
+            print(f"無法解析{section}")
             continue
         open_time, close_time = match.group(1), match.group(2)
         day_part = section[:match.start()].strip()

@@ -96,28 +96,28 @@ def get_pharmacy_masks(
     }
 
 comparison_ops = {
-    "<": operator.lt,
-    "<=": operator.le,
-    "==": operator.eq,
-    ">=": operator.ge,
-    ">": operator.gt,
+    "gt": operator.gt,
+    "lt": operator.lt,
+    "ge": operator.ge,
+    "le": operator.le,
+    "eq": operator.eq,
 }
 
-@router.get("/mask-count")
+@router.get("/pharmacies/mask_count")
 def get_pharmacies_by_mask_count(
-    min_price: float,
-    max_price: float,
-    threshold: int = Query(..., description="口罩數量的比較門檻"),
-    comparison: str = Query(">", description="可用：<, <=, ==, >=, >"),
+    min_price: float = Query(..., description="價格下限"),
+    max_price: float = Query(..., description="價格上限"),
+    count: int = Query(..., description="要比較的口罩數量"),
+    op: str = Query(..., description="運算子：gt, lt, ge, le, eq"),
     db: Session = Depends(get_db)
 ):
-    if comparison not in comparison_ops:
-        raise HTTPException(status_code=400, detail="必須是 <、<=、==、>= 或 >")
+    if op not in comparison_ops:
+        raise HTTPException(status_code=400, detail="無效的運算子，必須是：gt, lt, ge, le, eq")
 
-    compare_fn = comparison_ops[comparison]
+    compare_fn = comparison_ops[op]
 
-    pharmacies = db.query(Pharmacy).all()
     result = []
+    pharmacies = db.query(Pharmacy).all()
 
     for pharmacy in pharmacies:
         mask_count = db.query(Mask).filter(
@@ -126,10 +126,11 @@ def get_pharmacies_by_mask_count(
             Mask.price <= max_price
         ).count()
 
-        if compare_fn(mask_count, threshold):
+        if compare_fn(mask_count, count):
             result.append({
-                "pharmacy_id": pharmacy.id,
-                "pharmacy_name": pharmacy.name,
+                "id": pharmacy.id,
+                "name": pharmacy.name,
+                "cash_balance": pharmacy.cash_balance,
                 "mask_count": mask_count
             })
 

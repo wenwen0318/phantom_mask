@@ -1,171 +1,198 @@
-# Phantom Mask API 
+# Phantom Mask API
 
-API 伺服器預設位址：`http://127.0.0.1:8000/`
-
-所有 API 回傳皆為 JSON 格式。  
+API 主機位址：`http://127.0.0.1:8000/`  
+所有 API 回傳皆為 JSON 格式。
 
 ---
-## 1. List all pharmacies open at a specific time and on a day of the week if requested.
 
-**說明**：依據星期或時間，列出營業中的所有藥局。
-若星期或時間皆無輸入則列出當下營業中的所有藥局。
+## List all pharmacies open at a specific time and on a day of the week if requested.
 
-**參數**：
-- `day`:  星期 (Monday, Tuesday, Wednesday, Thurday, Friday, Saturday, Sunday)
-- `time`: 時間 (24小時制，例如 15:30)
+`GET /pharmacies/open`  
 
-**回傳**：
-藥局陣列（JSON）
+**描述**: 根據星期與時間查詢營業中的藥局。若未提供參數，預設為目前台灣時間。
 
-**範例**：
+### 查詢參數
+
+| 名稱 | 類型 | 必填 | 說明 |
+|------|------|------|------|
+| day  | string | 否 | 星期，如 `Monday`, `Tuesday`... |
+| time | string | 否 | 時間（24 小時制），例如 `14:30` |
+
+### 範例
+
 ```
 GET /pharmacies/open?day=Tuesday&time=14:30
 ```
 
-**回傳範例**： 
+### 回傳格式
+
 ```json
 [
-    {
+  {
     "id": 1,
     "name": "DFW Wellness",
     "cash_balance": 328.41
-    },
-    ...
+  }
 ]
 ```
+
 ---
-## 2.List all masks sold by a given pharmacy, sorted by mask name or price.
 
-**說明**：查詢指定藥局的所有口罩，可依名稱或價格排序，可指定升/降冪
+## List all masks sold by a given pharmacy, sorted by mask name or price.
 
-**參數**：
-- pharmacy_id: (必填)
-- sort_by: (選填) 排序依據 name 或 price，預設 name
-- order: (選填) asc 或 desc，預設 asc
+`GET /pharmacies/{pharmacy_id}/masks` 
 
-**回傳**：口罩陣列（JSON）
-**範例**：
+**描述**: 查詢某藥局販售的所有口罩，可指定排序。
+
+### 查詢參數
+
+| 名稱 | 必填 | 說明 |
+|------|------|------|
+| pharmacy_id | 是 | 藥局 ID |
+| sort_by | 否 | 排序欄位：`name` 或 `price`，預設為 `name` |
+| order   | 否 | 排序方式：`asc` 或 `desc`，預設為 `asc` |
+
+### 範例
+
 ```
-GET /pharmacies/1/masks?sort_by=name&order=desc
+GET /pharmacies/1/masks?sort_by=price&order=desc
 ```
-**回傳範例**：
+
+### 回傳格式
+
 ```json
 {
-    "pharmacy": "DFW Wellness",
-    "masks": [
-        {
-            "name": "True Barrier (green)(3 per pack)",
-            "price": 13.7
-        },
-        ...
+  "pharmacy": "DFW Wellness",
+  "masks": [
+    {
+      "name": "True Barrier (green)(3 per pack)",
+      "price": 13.7
+    }
+  ]
+}
 ```
+
 ---
 
-## 3.列出在特定價格範圍內，販售的口罩數量多於或少於 X 種的藥局
-## GET /pharmacies/mask_count 
+## List all pharmacies with more or fewer than x mask products within a specific price range.
 
-- 說明：列出在特定價格範圍內，販售的口罩數量多於或少於 X 種的藥局
-- 參數：
-    - min_price: (必填) 最小價格
-    - max_price: (必填) 最大價格
-    - count: (必填) 比較的口罩種類數 X
-    - op: (必填) 運算子，'gt' , 'lt', 'ge', 'le', 'eq'
-    - op_map = {
-        'gt': '>',
-        'lt': '<',
-        'ge': '>=',
-        'le': '<=',
-        'eq': '='
-      }
-- 回傳：
-    - 藥局陣列（JSON），包含 mask_count 欄位
-- 範例：
-    GET /pharmacies/mask_count?min_price=10&max_price=50&count=2&op=gt
-- 回傳範例：
-    ```json
-    [
-      {
-        "id": 1,
-        "name": "DFW Wellness",
-        "cash_balance": 328.41,
-        "mask_count": 3
-      },
-      ...
-    ]
-    ```
+`GET /pharmacies/mask_count`  
+
+**描述**: 依價格範圍與口罩數量篩選藥局。
+
+### 查詢參數
+
+| 名稱 | 必填 | 說明 |
+|------|------|------|
+| min_price | 是 | 價格下限 |
+| max_price | 是 | 價格上限 |
+| count     | 是 | 要比較的口罩數量 |
+| op        | 是 | 運算子：`gt`, `lt`, `ge`, `le`, `eq` |
+
+### 範例
+
+```
+GET /pharmacies/pharmacies/mask_count?min_price=10&max_price=50&count=2&op=gt
+```
+
+### 回傳格式
+
+```json
+[
+  {
+    "id": 1,
+    "name": "DFW Wellness",
+    "cash_balance": 347.21,
+    "mask_count": 3
+  },
+]
+```
 
 ---
-## 4. Retrieve the top x users by total transaction amount of masks within a date range.
-## GET /users/top_transactions 
 
-**說明**：查詢特定日期範圍內，總口罩交易金額最高的前 x 位用戶
+## Retrieve the top x users by total transaction amount of masks within a date range.
 
-**參數**：
-- start: (必填) 起始日期，格式 YYYY-MM-DD
-- end: (必填) 結束日期，格式 YYYY-MM-DD
-- top: (選填，預設=5) 前幾名
+`GET /users/top_transactions`  
 
-**回傳**：
-    用戶陣列（JSON），含 total_spent 欄位
+**描述**: 查詢特定期間內交易金額最高的使用者。
 
-**範例**：
+### 查詢參數
+
+| 名稱 | 必填 | 說明 |
+|------|------|------|
+| start | 是 | 起始日期 (YYYY-MM-DD) |
+| end   | 是 | 結束日期 (YYYY-MM-DD) |
+| top   | 否 | 前幾名，預設為 5 |
+
+### 範例
+
 ```
-GET users/top-spenders?start=2021-01-01&end=2021-01-31&top=3
+GET /users/top_transactions?start=2021-01-01&end=2021-01-31&top=3
 ```
-**回傳範例**：
+
+### 回傳格式
+
 ```json
 [
   {
     "user_id": 8,
     "name": "Timothy Schultz",
     "total_spent": 178.28
-  },
-  ...
+  }
 ]
 ```
 
-
 ---
-## 5.Calculate the total number of masks and the total transaction value within a date range.
-## GET /purchase/summary 
 
-**說明**：計算在特定日期範圍內，總共販售的口罩數量與交易金額總額
+## Calculate the total number of masks and the total transaction value within a date range.
 
-**參數**：
-- start_date: (必填) 起始日期，格式 YYYY-MM-DD
-- end_date: (必填) 結束日期，格式 YYYY-MM-DD
+`GET /purchase/summary`  
+**描述**: 統計在指定期間販售的口罩總量與交易總額。
 
-**回傳**：
-    - JSON 物件，包含 total_quantity（總數量）、total_transaction（總金額）
+### 查詢參數
 
-**範例**：
+| 名稱 | 必填 | 說明 |
+|------|------|------|
+| start_date | 是 | 起始日期 (YYYY-MM-DD) |
+| end_date   | 是 | 結束日期 (YYYY-MM-DD) |
+
+### 範例
+
 ```
-GET /purchase/summary?start_date=2021-01-01&end_date=2021-01-31
+GET purchase/purchase/summary?start_date=2021-01-01&end_date=2021-01-31
 ```
 
-**回傳範例**：
+### 回傳格式
+
 ```json
 {
-  "total_quantity": 123,
-  "total_transaction": 1983.5
+  "total_quantity": 100,
+  "total_transaction": 1849.52
 }
 ```
+
 ---
-## 6.Search for pharmacies or masks by name and rank the results by relevance to the search term.
-## GET /search 
 
-**說明**：依名稱搜尋藥局或口罩，並依與關鍵字相關性排序結果
+## Search for pharmacies or masks by name and rank the results by relevance to the search term.
 
-**參數**：
-- type: (必填) 搜尋對象 'pharmacy' 或 'mask'
-- keyword: (必填) 搜尋關鍵字
-    
-**回傳**：搜尋結果陣列（JSON）
+**Endpoint**: `GET /search`  
+**描述**: 搜尋藥局或口罩名稱，並依相關性排序。
 
-**範例**：
-GET /search/?type=pharmacy&keyword=N
+### 查詢參數
 
-**回傳範例**：
+| 名稱 | 必填 | 說明 |
+|------|------|------|
+| type    | 是 | `pharmacy` 或 `mask` |
+| keyword | 是 | 搜尋關鍵字 |
+
+### 範例
+
+```
+GET /search?type=pharmacy&keyword=N
+```
+
+### 回傳格式
+
 ```json
 [
   {
@@ -176,63 +203,69 @@ GET /search/?type=pharmacy&keyword=N
     "id": 13,
     "name": "Foundation Care"
   },
-  ...
 ]
 ```
+
 ---
 
-## 7.處理用戶購買口罩的過程
-## POST /purchase
+## Handle the process of a user purchasing masks, possibly from different pharmacies.
 
-- 說明：處理用戶購買口罩的過程，可同時從多個藥局購買
-- 輸入：
-    - user_id: 用戶ID
-    - items: 陣列，每個元素 { pharmacy_id, mask_id, quantity }
-- 回傳：
-    - success: 是否成功
-    - total_cost: 本次交易總金額
-    - purchases: 每一項商品購買明細
-- 範例輸入：
-    ```json
+**Endpoint**: `POST /purchase`  
+**描述**: 使用者購買口罩，可跨藥局。
+
+### 請求格式（JSON）
+
+```json
+{
+  "user_id": 1,
+  "items": [
     {
-      "user_id": 1,
-      "items": [
-        { "pharmacy_id": 1, "mask_id": 2, "quantity": 3 }
-      ]
+      "mask_id": 1,
+      "quantity": 1
     }
-    ```
+  ]
+}
+```
 
-- 或是在cmd輸入下列字元:
-    - curl -X POST http://127.0.0.1:5000/purchase -H "Content-Type: application/json" -d "{\"user_id\": 1, \"items\":[{\"pharmacy_id\": 1, \"mask_id\": 2, \"quantity\": 3}]}"
+### 命令列測試範例
 
-
-- 回傳範例：
-    ```json
+```bash
+curl -X 'POST' \
+  'http://127.0.0.1:8000/purchase/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "user_id": 1,
+  "items": [
     {
-      "success": true,
-      "total_cost": 180.2,
-      "purchases": [
-        {
-          "pharmacy_id": 1,
-          "mask_id": 2,
-          "mask_name": "Second Smile (black) (10 per pack)",
-          "price": 41.86,
-          "quantity": 3,
-          "total_price": 125.58
-        },
-        {
-          "pharmacy_id": 2,
-          "mask_id": 8,
-          "mask_name": "Masquerade (green) (3 per pack)",
-          "price": 9.4,
-          "quantity": 2,
-          "total_price": 18.8
-        }
-      ]
+      "mask_id": 1,
+      "quantity": 1
     }
-    ```
-- 若失敗：
-    ```json
-    { "error": "用戶餘額不足" }
-    ```
+  ]
+}'
+```
+
+### 回傳格式
+
+```json
+{
+  "message": "Purchase completed",
+  "total_spent": 0
+}
+```
+
+### 失敗回傳
+- 無符合口罩
+```json
+{"detail": "Mask not found"}
+```
+- 無符合使用者
+```json
+{"detail": "User not found"}
+```
+- 使用者餘額不足
+```json
+{"detail": "Insufficient balance"}
+```
+
 ---
